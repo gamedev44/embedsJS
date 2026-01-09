@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neural Network Directory - Vanilla</title>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* CSS RESET & VARIABLES */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        
+        :root {
+            --bg-color: #0a0a0c;
+            --card-bg: #0f1012;
+            --modal-bg: #1a1b1e;
+            --border-color: rgba(255, 255, 255, 0.05);
+            --text-main: #e2e8f0;
+            --text-muted: #64748b;
+            --accent-color: #6366f1;
+            --accent-hover: #4f46e5;
+            
+            /* Metric Colors */
+            --color-emerald: #10b981;
+            --color-rose: #f43f5e;
+            --color-amber: #f59e0b;
+            --color-slate: #94a3b8;
+            --color-blue: #3b82f6;
+            --color-purple: #a855f7;
+            --color-yellow: #eab308;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* LAYOUT */
+        #app {
+            display: flex;
+            height: 100%;
+            width: 100%;
+            position: relative;
+        }
+
+        .directory-view {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--bg-color);
+            position: relative;
+            z-index: 20;
+        }
+
+        /* HEADER */
+        .header {
+            padding: 2.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        @media (min-width: 768px) {
+            .header {
+                flex-direction: row;
+                align-items: center;
+                justify-content: space-between;
+                padding: 2.5rem;
+            }
+        }
+
+        .header-title h1 {
+            font-size: 1.5rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: -0.025em;
+            color: #fff;
+        }
+
+        .header-title p {
+            font-size: 10px;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            font-weight: 700;
+            margin-top: 0.25rem;
+        }
+
+        /* SEARCH */
+        .search-container {
+            position: relative;
+            width: 100%;
+        }
+
+        @media (min-width: 768px) {
+            .search-container { width: 320px; }
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            width: 18px;
+            height: 18px;
+            pointer-events: none;
+            transition: color 0.2s;
+        }
+
+        .search-input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 1rem;
+            padding: 0.75rem 1rem 0.75rem 3rem;
+            font-size: 0.875rem;
+            color: #fff;
+            transition: all 0.2s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: rgba(99, 102, 241, 0.5);
+        }
+
+        .search-container:focus-within .search-icon {
+            color: var(--accent-color);
+        }
+
+        /* GRID & CARDS */
+        .grid-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 2rem;
+        }
+
+        @media (min-width: 768px) {
+            .grid-container { padding: 3rem; }
+        }
+
+        .user-grid {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(1, minmax(0, 1fr));
+            gap: 1rem;
+        }
+
+        @media (min-width: 640px) { .user-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+        @media (min-width: 1024px) { .user-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+        @media (min-width: 1280px) { .user-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+        @media (min-width: 1536px) { .user-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+
+        .operator-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: left;
+            position: relative;
+        }
+
+        @media (min-width: 640px) {
+            .operator-card {
+                flex-direction: column;
+                padding: 2.5rem;
+                text-align: center;
+                gap: 1.5rem;
+            }
+        }
+
+        .operator-card:hover {
+            background: #16171a;
+            border-color: rgba(99, 102, 241, 0.3);
+            transform: translateY(-4px);
+        }
+
+        .avatar-container {
+            width: 3.5rem;
+            height: 3.5rem;
+            border-radius: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            color: #fff;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            transition: transform 0.5s;
+        }
+
+        @media (min-width: 640px) {
+            .avatar-container {
+                width: 6rem;
+                height: 6rem;
+                border-radius: 2rem;
+                font-size: 1.5rem;
+            }
+        }
+
+        .operator-card:hover .avatar-container { transform: scale(1.1); }
+
+        .avatar-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .operator-info {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            width: 100%;
+        }
+
+        .operator-name {
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--text-main);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        @media (min-width: 640px) {
+            .operator-name { font-size: 1.25rem; }
+        }
+
+        .operator-status {
+            font-size: 9px;
+            font-weight: 700;
+            color: rgba(99, 102, 241, 0.6);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .status-dot {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            width: 6px;
+            height: 6px;
+            border-radius: 9999px;
+            background: var(--border-color);
+            transition: background 0.3s, box-shadow 0.3s;
+        }
+
+        .operator-card:hover .status-dot {
+            background: var(--accent-color);
+            box-shadow: 0 0 15px var(--accent-color);
+        }
+
+        /* CONTEXT MENU */
+        #contextMenu {
+            position: fixed;
+            z-index: 100;
+            background: var(--modal-bg);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 0.75rem;
+            padding: 0.5rem;
+            min-width: 160px;
+            display: none;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            animation: zoomIn 0.15s ease-out;
+        }
+
+        .context-btn {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.875rem;
+            color: #cbd5e1;
+            background: none;
+            border: none;
+            cursor: pointer;
+            border-radius: 0.5rem;
+            transition: background 0.2s;
+        }
+
+        .context-btn:hover { background: rgba(255, 255, 255, 0.05); }
+
+        /* MODALS */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 110;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(12px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .modal-card {
+            background: var(--modal-bg);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 2.5rem;
+            width: 100%;
+            max-width: 28rem;
+            padding: 2rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            animation: zoomIn 0.3s ease-out;
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            color: #fff;
+            letter-spacing: -0.025em;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 0.5rem;
+        }
+
+        /* FORM STYLES */
+        .form-group { margin-bottom: 1.5rem; }
+        
+        .form-label {
+            display: block;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+            margin-left: 0.5rem;
+        }
+
+        .form-input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 1.25rem;
+            padding: 1rem 1.25rem;
+            color: #fff;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: rgba(99, 102, 241, 0.5);
+        }
+
+        .passkey-input-wrapper { position: relative; }
+        
+        .passkey-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #334155;
+        }
+
+        .passkey-field { padding-left: 3rem; }
+
+        .confirm-btn {
+            width: 100%;
+            padding: 1rem;
+            background: var(--accent-color);
+            color: #fff;
+            border: none;
+            border-radius: 1.25rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
+            box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.2);
+        }
+
+        .confirm-btn:hover { background: var(--accent-hover); }
+        .confirm-btn:active { transform: scale(0.98); }
+
+        /* AVATAR EDIT */
+        .avatar-edit-zone {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .upload-circle {
+            width: 6rem;
+            height: 6rem;
+            border-radius: 1.5rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px dashed rgba(255, 255, 255, 0.2);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition: border-color 0.2s;
+        }
+
+        .upload-circle:hover { border-color: var(--accent-color); }
+
+        .upload-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #fff;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .upload-circle:hover .upload-overlay { opacity: 1; }
+
+        /* PROFILE MODAL (LARGE) */
+        .profile-modal-card {
+            max-width: 56rem;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        @media (min-width: 768px) {
+            .profile-modal-card { flex-direction: row; }
+        }
+
+        .profile-sidebar {
+            padding: 2.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        @media (min-width: 768px) {
+            .profile-sidebar { width: 33.33%; border-bottom: none; border-right: 1px solid var(--border-color); }
+        }
+
+        .profile-avatar-large {
+            width: 8rem;
+            height: 8rem;
+            border-radius: 2.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: #fff;
+            margin-bottom: 2rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+        }
+
+        @media (min-width: 768px) {
+            .profile-avatar-large { width: 12rem; height: 12rem; font-size: 3.5rem; }
+        }
+
+        .profile-name-large {
+            font-size: 2rem;
+            font-weight: 900;
+            color: #fff;
+            letter-spacing: -0.05em;
+            margin-bottom: 0.5rem;
+        }
+
+        @media (min-width: 768px) {
+            .profile-name-large { font-size: 3rem; }
+        }
+
+        .profile-main {
+            flex: 1;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        @media (min-width: 768px) {
+            .profile-main { padding: 3rem; }
+        }
+
+        /* SCORE BARS */
+        .score-item { margin-bottom: 2rem; }
+
+        .score-labels {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        .score-label-left { display: flex; align-items: center; gap: 0.5rem; }
+
+        .score-bar-bg {
+            height: 0.625rem;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 9999px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+
+        .score-bar-fill {
+            height: 100%;
+            transition: width 1s ease-out;
+        }
+
+        /* UTILS */
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 20px; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes zoomIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        
+        .hidden { display: none !important; }
+        .flex { display: flex !important; }
+
+        .bg-emerald-500 { background-color: var(--color-emerald); }
+        .bg-rose-500 { background-color: var(--color-rose); }
+        .bg-amber-500 { background-color: var(--color-amber); }
+        .bg-slate-500 { background-color: var(--color-slate); }
+        .bg-blue-500 { background-color: var(--color-blue); }
+        .bg-purple-500 { background-color: var(--color-purple); }
+        .bg-yellow-500 { background-color: var(--color-yellow); }
+
+        .text-blue-500 { color: var(--color-blue); }
+        .text-purple-500 { color: var(--color-purple); }
+        .text-slate-400 { color: #94a3b8; }
+        .text-yellow-500 { color: var(--color-yellow); }
+    </style>
+</head>
+<body>
+
+    <div id="app">
+        <!-- Main Directory View -->
+        <div class="directory-view">
+            <header class="header">
+                <div class="header-title">
+                    <h1>Neural Network</h1>
+                    <p>Personnel Directory Alpha-1</p>
+                </div>
+                <div class="search-container">
+                    <i data-lucide="search" class="search-icon"></i>
+                    <input type="text" id="searchInput" class="search-input" placeholder="Search operators...">
+                </div>
+            </header>
+
+            <main class="grid-container custom-scrollbar">
+                <div id="userGrid" class="user-grid">
+                    <!-- Cards injected via JavaScript -->
+                </div>
+            </main>
+        </div>
+
+        <!-- Right Click Context Menu -->
+        <div id="contextMenu">
+            <button id="editContextBtn" class="context-btn">
+                <i data-lucide="edit-2" style="width: 14px; height: 14px;"></i> Edit Identity
+            </button>
+        </div>
+
+        <!-- Edit Modal Overlay -->
+        <div id="editModalOverlay" class="modal-overlay" onclick="closeEditModal()">
+            <div class="modal-card" onclick="event.stopPropagation()">
+                <div class="modal-header">
+                    <h2 class="modal-title">Modify Identity</h2>
+                    <button class="close-btn" onclick="closeEditModal()"><i data-lucide="x"></i></button>
+                </div>
+
+                <div class="avatar-edit-zone">
+                    <div id="imageUploadZone" class="upload-circle">
+                        <div id="editAvatarPreview" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">
+                            <i data-lucide="camera" style="color: #64748b; width: 24px; height: 24px;"></i>
+                        </div>
+                        <div class="upload-overlay">Change</div>
+                    </div>
+                    <p style="font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 0.1em;">Click to browse or Paste Image</p>
+                    <input type="file" id="fileInput" class="hidden" accept="image/*">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Display Name</label>
+                    <input type="text" id="editNameInput" class="form-input">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Personal Passkey</label>
+                    <div class="passkey-input-wrapper">
+                        <input type="password" id="passkeyInput" class="form-input passkey-field" placeholder="Enter 4-digit key">
+                        <i data-lucide="lock" class="passkey-icon" style="width: 18px; height: 18px;"></i>
+                    </div>
+                </div>
+
+                <button id="confirmEditBtn" class="confirm-btn">
+                    <i data-lucide="check" style="width: 18px; height: 18px;"></i> CONFIRM CHANGES
+                </button>
+            </div>
+        </div>
+
+        <!-- Profile Detail Overlay -->
+        <div id="detailModalOverlay" class="modal-overlay" onclick="closeDetailModal()" style="backdrop-filter: blur(20px);">
+            <button class="close-btn" style="position: absolute; top: 1.5rem; right: 1.5rem; padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 9999px;" onclick="closeDetailModal()">
+                <i data-lucide="x" style="width: 24px; height: 24px; color: #94a3b8;"></i>
+            </button>
+            <div id="detailContent" class="modal-card profile-modal-card custom-scrollbar" onclick="event.stopPropagation()" style="max-height: 90vh; overflow-y: auto;">
+                <!-- Content injected via JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- DATA ---
+        let users = [
+            { id: 1, name: 'Asterisk', color: 'bg-emerald-500', avatar: 'AS', image: null, passkey: '7946', scores: { independence: 74, productivity: 86, lurker: 9, activity: 91 } },
+            { id: 2, name: 'Bleedous', color: 'bg-rose-500', avatar: 'BL', image: null, passkey: '9632', scores: { independence: 42, productivity: 93, lurker: 11, activity: 89 } },
+            { id: 3, name: 'Wambo', color: 'bg-amber-500', avatar: 'WA', image: null, passkey: '1478', scores: { independence: 5, productivity: 13, lurker: 96, activity: 4 } },
+            { id: 4, name: 'Elaburrid', color: 'bg-slate-500', avatar: 'EL', image: null, passkey: '2468', scores: { independence: 48, productivity: 42, lurker: 83, activity: 17 } }
+        ];
+
+        let editingUserId = null;
+        let searchQuery = "";
+
+        // --- DOM ELEMENTS ---
+        const userGrid = document.getElementById('userGrid');
+        const searchInput = document.getElementById('searchInput');
+        const contextMenu = document.getElementById('contextMenu');
+        const editModalOverlay = document.getElementById('editModalOverlay');
+        const detailModalOverlay = document.getElementById('detailModalOverlay');
+        const detailContent = document.getElementById('detailContent');
+        const fileInput = document.getElementById('fileInput');
+        const editNameInput = document.getElementById('editNameInput');
+        const passkeyInput = document.getElementById('passkeyInput');
+        const confirmEditBtn = document.getElementById('confirmEditBtn');
+        const imageUploadZone = document.getElementById('imageUploadZone');
+
+        // --- CORE FUNCTIONS ---
+        function renderGrid() {
+            const query = searchQuery.toLowerCase();
+            const filtered = users
+                .filter(u => u.name.toLowerCase().includes(query))
+                .sort((a, b) => {
+                    const aStarts = a.name.toLowerCase().startsWith(query);
+                    const bStarts = b.name.toLowerCase().startsWith(query);
+                    return (aStarts && !bStarts) ? -1 : (!aStarts && bStarts) ? 1 : 0;
+                });
+
+            userGrid.innerHTML = filtered.map(user => `
+                <div class="operator-card" onclick="openProfileDetail(${user.id})" oncontextmenu="handleRightClick(event, ${user.id})">
+                    <div class="avatar-container ${user.color}">
+                        ${user.image ? `<img src="${user.image}" class="avatar-img">` : `<span>${user.avatar}</span>`}
+                    </div>
+                    <div class="operator-info">
+                        <span class="operator-name">${user.name}</span>
+                        <span class="operator-status">Verified Operator</span>
+                    </div>
+                    <div class="status-dot"></div>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        // --- SEARCH HANDLER ---
+        searchInput.addEventListener('input', (e) => {
+            searchQuery = e.target.value;
+            renderGrid();
+        });
+
+        // --- CONTEXT MENU HANDLERS ---
+        function handleRightClick(e, id) {
+            e.preventDefault();
+            editingUserId = id;
+            contextMenu.style.display = 'block';
+            contextMenu.style.top = e.pageY + 'px';
+            contextMenu.style.left = e.pageX + 'px';
+        }
+
+        window.addEventListener('click', () => {
+            contextMenu.style.display = 'none';
+        });
+
+        document.getElementById('editContextBtn').onclick = () => {
+            const user = users.find(u => u.id === editingUserId);
+            editNameInput.value = user.name;
+            passkeyInput.value = '';
+            passkeyInput.style.borderColor = 'rgba(255,255,255,0.05)';
+            updateEditPreview(user);
+            editModalOverlay.classList.add('flex');
+            contextMenu.style.display = 'none';
+        };
+
+        function updateEditPreview(user) {
+            const preview = document.getElementById('editAvatarPreview');
+            if (user.image) {
+                preview.innerHTML = `<img src="${user.image}" class="avatar-img">`;
+            } else {
+                preview.innerHTML = `<i data-lucide="camera" style="color: #64748b; width: 24px; height: 24px;"></i>`;
+                lucide.createIcons();
+            }
+        }
+
+        function closeEditModal() {
+            editModalOverlay.classList.remove('flex');
+            editingUserId = null;
+        }
+
+        confirmEditBtn.onclick = () => {
+            const user = users.find(u => u.id === editingUserId);
+            if (passkeyInput.value === user.passkey) {
+                user.name = editNameInput.value;
+                closeEditModal();
+                renderGrid();
+            } else {
+                passkeyInput.style.borderColor = '#ef4444';
+                setTimeout(() => {
+                    passkeyInput.style.borderColor = 'rgba(255,255,255,0.05)';
+                }, 2000);
+            }
+        };
+
+        // --- IMAGE MANAGEMENT ---
+        imageUploadZone.onclick = () => fileInput.click();
+        
+        fileInput.onchange = (e) => {
+            const file = e.target.files[0];
+            if (file) handleImageFile(file);
+        };
+
+        window.onpaste = (e) => {
+            if (editingUserId && editModalOverlay.classList.contains('flex')) {
+                const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+                for (let i = 0; i < items.length; i++) {
+                    if (items[i].type.indexOf('image') !== -1) {
+                        handleImageFile(items[i].getAsFile());
+                    }
+                }
+            }
+        };
+
+        function handleImageFile(file) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const user = users.find(u => u.id === editingUserId);
+                user.image = event.target.result;
+                updateEditPreview(user);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // --- PROFILE DETAIL HANDLERS ---
+        function openProfileDetail(id) {
+            const user = users.find(u => u.id === id);
+            detailContent.innerHTML = `
+                <div class="profile-sidebar ${user.color}" style="background-color: rgba(255,255,255,0.03);">
+                    <div class="profile-avatar-large ${user.color}">
+                        ${user.image ? `<img src="${user.image}" class="avatar-img">` : `<span>${user.avatar}</span>`}
+                    </div>
+                    <div>
+                        <h2 class="profile-name-large">${user.name}</h2>
+                        <p style="color: #6366f1; font-weight: 700; letter-spacing: 0.3em; text-transform: uppercase; font-size: 12px;">Neural Profile Alpha-1</p>
+                    </div>
+                </div>
+                <div class="profile-main">
+                    ${renderScoreItem("Independence", user.scores.independence, "target", "text-blue-500", "bg-blue-500")}
+                    ${renderScoreItem("Productivity", user.scores.productivity, "award", "text-purple-500", "bg-purple-500")}
+                    ${renderScoreItem("Lurker Score", user.scores.lurker, "ghost", "text-slate-400", "bg-slate-500")}
+                    ${renderScoreItem("Activity", user.scores.activity, "zap", "text-yellow-500", "bg-yellow-500")}
+                    
+                    <div style="margin-top: 3rem; padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.05);">
+                        <button onclick="closeDetailModal()" class="confirm-btn" style="width: auto; padding: 1rem 2.5rem; font-size: 14px;">CLOSE DOSSIER</button>
+                    </div>
+                </div>
+            `;
+            detailModalOverlay.classList.add('flex');
+            lucide.createIcons();
+        }
+
+        function renderScoreItem(label, value, icon, iconColor, barColor) {
+            return `
+                <div class="score-item">
+                    <div class="score-labels">
+                        <div class="score-label-left">
+                            <i data-lucide="${icon}" class="${iconColor}" style="width: 16px; height: 16px;"></i>
+                            ${label}
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span style="color: #f1f5f9;">${value}%</span>
+                            <i data-lucide="info" style="width: 14px; height: 14px; color: #334155;"></i>
+                        </div>
+                    </div>
+                    <div class="score-bar-bg">
+                        <div class="score-bar-fill ${barColor}" style="width: ${value}%"></div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function closeDetailModal() {
+            detailModalOverlay.classList.remove('flex');
+        }
+
+        // Initialize grid on load
+        renderGrid();
+    </script>
+</body>
+</html>
